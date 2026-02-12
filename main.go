@@ -4,12 +4,15 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/adtoba/earnwise_backend.git/src/initializers"
+	"github.com/adtoba/earnwise_backend/src/initializers"
+	"github.com/adtoba/earnwise_backend/src/migrate"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
-	server *gin.Engine
+	server      *gin.Engine
+	RedisClient *redis.Client
 )
 
 func init() {
@@ -19,7 +22,15 @@ func init() {
 		log.Fatal("Failed to load config:", err)
 	}
 
-	initializers.ConnectDB(&config)
+	DB := initializers.ConnectDB(&config)
+	migrate.Migrate(DB)
+
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr:     config.RedisAddr,
+		Username: config.RedisUsername,
+		Password: config.RedisPassword,
+		DB:       config.RedisDB,
+	})
 
 	server = gin.Default()
 }
