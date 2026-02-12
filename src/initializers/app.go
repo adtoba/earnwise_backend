@@ -8,8 +8,8 @@ type Config struct {
 	DBHost     string `mapstructure:"POSTGRES_HOST"`
 	DBPort     string `mapstructure:"POSTGRES_PORT"`
 	DBName     string `mapstructure:"POSTGRES_DB"`
-	ServerPort string `mapstructure:"SERVER_PORT"`
 	JWTSecret  string `mapstructure:"JWT_SECRET"`
+	Port       string `mapstructure:"PORT"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
