@@ -4,8 +4,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/adtoba/earnwise_backend/src/controllers"
 	"github.com/adtoba/earnwise_backend/src/initializers"
 	"github.com/adtoba/earnwise_backend/src/migrate"
+	"github.com/adtoba/earnwise_backend/src/routes"
+	"github.com/adtoba/earnwise_backend/src/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
@@ -13,6 +16,9 @@ import (
 var (
 	server      *gin.Engine
 	RedisClient *redis.Client
+
+	AuthController      *controllers.AuthController
+	AuthRouteController *routes.AuthRouteController
 )
 
 func init() {
@@ -32,6 +38,11 @@ func init() {
 		DB:       config.RedisDB,
 	})
 
+	tokenMaker := utils.NewJWTMaker(config.JWTSecret, RedisClient)
+
+	AuthController = controllers.NewAuthController(DB, tokenMaker, RedisClient)
+	AuthRouteController = routes.NewAuthRouteController(*AuthController)
+
 	server = gin.Default()
 }
 
@@ -45,6 +56,9 @@ func main() {
 	server.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+
+	v1 := server.Group("/api/v1")
+	AuthRouteController.RegisterAuthRoutes(v1)
 
 	log.Fatal(server.Run(":" + config.Port))
 }
