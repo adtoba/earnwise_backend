@@ -22,6 +22,7 @@ type User struct {
 	Zip             string    `json:"zip"`
 	Country         string    `json:"country"`
 	Role            string    `json:"role"`
+	ProfilePicture  string    `json:"profile_picture"`
 	IsBlocked       bool      `json:"is_blocked"`
 	IsEmailVerified bool      `json:"is_email_verified"`
 	IsPhoneVerified bool      `json:"is_phone_verified"`
@@ -88,6 +89,17 @@ type CreateUserRequest struct {
 type LoginUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type UpdateUserRequest struct {
+	Gender         string `json:"gender" binding:"required"`
+	PhoneNumber    string `json:"phone_number" binding:"required"`
+	ProfilePicture string `json:"profile_picture"`
+	Country        string `json:"country" binding:"required"`
+	State          string `json:"state" binding:"required"`
+	City           string `json:"city" binding:"required"`
+	Address        string `json:"address" binding:"required"`
+	Zip            string `json:"zip" binding:"required"`
 }
 
 type LoginUserResponse struct {

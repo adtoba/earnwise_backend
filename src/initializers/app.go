@@ -14,6 +14,7 @@ type Config struct {
 	RedisPassword string `mapstructure:"REDIS_PASSWORD"`
 	RedisDB       int    `mapstructure:"REDIS_DB"`
 	Port          string `mapstructure:"PORT"`
+	JWT_SECRET    string `mapstructure:"JWT_SECRET"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

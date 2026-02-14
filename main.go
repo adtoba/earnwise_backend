@@ -19,6 +19,15 @@ var (
 
 	AuthController      *controllers.AuthController
 	AuthRouteController *routes.AuthRouteController
+
+	CategoryController      *controllers.CategoryController
+	CategoryRouteController *routes.CategoryRouteController
+
+	ExpertController      *controllers.ExpertController
+	ExpertRouteController *routes.ExpertRouteController
+
+	UserController      *controllers.UserController
+	UserRouteController *routes.UserRouteController
 )
 
 func init() {
@@ -43,6 +52,15 @@ func init() {
 	AuthController = controllers.NewAuthController(DB, tokenMaker, RedisClient)
 	AuthRouteController = routes.NewAuthRouteController(*AuthController)
 
+	CategoryController = controllers.NewCategoryController(DB)
+	CategoryRouteController = routes.NewCategoryRouteController(*CategoryController)
+
+	ExpertController = controllers.NewExpertController(DB)
+	ExpertRouteController = routes.NewExpertRouteController(*ExpertController)
+
+	UserController = controllers.NewUserController(DB)
+	UserRouteController = routes.NewUserRouteController(*UserController)
+
 	server = gin.Default()
 }
 
@@ -59,6 +77,9 @@ func main() {
 
 	v1 := server.Group("/api/v1")
 	AuthRouteController.RegisterAuthRoutes(v1)
+	CategoryRouteController.RegisterCategoryRoutes(v1)
+	ExpertRouteController.RegisterExpertRoutes(v1, RedisClient)
+	UserRouteController.RegisterUserRoutes(v1, RedisClient)
 
 	log.Fatal(server.Run(":" + config.Port))
 }
