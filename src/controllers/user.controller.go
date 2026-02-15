@@ -58,3 +58,50 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("User updated successfully", user.ToUserResponse()))
 }
+
+func (uc *UserController) SaveExpert(c *gin.Context) {
+	var payload models.SaveExpertRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", err.Error()))
+		return
+	}
+
+	var savedExpert models.SavedExpert
+	result := uc.DB.First(&savedExpert, "user_id = ? AND expert_id = ?", c.MustGet("user_id").(string), payload.ExpertID)
+
+	if savedExpert.ID != "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Expert already saved", nil))
+		return
+	}
+
+	savedExpert.UserID = c.MustGet("user_id").(string)
+	savedExpert.ExpertID = payload.ExpertID
+
+	res := uc.DB.Create(&savedExpert)
+	if res.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Expert saved successfully", savedExpert))
+}
+
+func (uc *UserController) GetSavedExperts(c *gin.Context) {
+	var savedExperts []models.SavedExpert
+	result := uc.DB.Where("user_id = ?", c.MustGet("user_id").(string)).Find(&savedExperts)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	var experts []models.ExpertProfile
+	for _, savedExpert := range savedExperts {
+		var expert models.ExpertProfile
+		result := uc.DB.Preload("User").First(&expert, "id = ?", savedExpert.ExpertID)
+		if result.Error != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+			return
+		}
+		experts = append(experts, expert)
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Saved experts fetched successfully", experts))
+}

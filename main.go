@@ -28,6 +28,15 @@ var (
 
 	UserController      *controllers.UserController
 	UserRouteController *routes.UserRouteController
+
+	WalletController      *controllers.WalletController
+	WalletRouteController *routes.WalletRouteController
+
+	PostController      *controllers.PostController
+	PostRouteController *routes.PostRouteController
+
+	ReviewController      *controllers.ReviewController
+	ReviewRouteController *routes.ReviewRouteController
 )
 
 func init() {
@@ -55,11 +64,20 @@ func init() {
 	CategoryController = controllers.NewCategoryController(DB)
 	CategoryRouteController = routes.NewCategoryRouteController(*CategoryController)
 
-	ExpertController = controllers.NewExpertController(DB)
+	WalletController = controllers.NewWalletController(DB)
+	WalletRouteController = routes.NewWalletRouteController(*WalletController)
+
+	ExpertController = controllers.NewExpertController(DB, WalletController)
 	ExpertRouteController = routes.NewExpertRouteController(*ExpertController)
 
 	UserController = controllers.NewUserController(DB)
 	UserRouteController = routes.NewUserRouteController(*UserController)
+
+	PostController = controllers.NewPostController(DB)
+	PostRouteController = routes.NewPostRouteController(*PostController)
+
+	ReviewController = controllers.NewReviewController(DB)
+	ReviewRouteController = routes.NewReviewRouteController(*ReviewController)
 
 	server = gin.Default()
 }
@@ -80,6 +98,9 @@ func main() {
 	CategoryRouteController.RegisterCategoryRoutes(v1)
 	ExpertRouteController.RegisterExpertRoutes(v1, RedisClient)
 	UserRouteController.RegisterUserRoutes(v1, RedisClient)
+	WalletRouteController.RegisterWalletRoutes(v1, RedisClient)
+	PostRouteController.RegisterPostRoutes(v1, RedisClient)
+	ReviewRouteController.RegisterReviewRoutes(v1, RedisClient)
 
 	log.Fatal(server.Run(":" + config.Port))
 }

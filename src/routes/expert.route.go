@@ -20,4 +20,9 @@ func (rc *ExpertRouteController) RegisterExpertRoutes(rg *gin.RouterGroup, redis
 	router.POST("/", middleware.AuthMiddleware(redisClient), rc.expertController.CreateExpertProfile)
 	router.GET("/:id", middleware.AuthMiddleware(redisClient), rc.expertController.GetExpertProfileById)
 	router.GET("/", middleware.AuthMiddleware(redisClient), rc.expertController.GetExpertProfile)
+	router.PUT("/rate", middleware.AuthMiddleware(redisClient), rc.expertController.UpdateExpertRate)
+	router.PUT("/socials", middleware.AuthMiddleware(redisClient), rc.expertController.UpdateExpertSocials)
+	router.PUT("/details", middleware.AuthMiddleware(redisClient), rc.expertController.UpdateExpertDetails)
+	router.PUT("/availability", middleware.AuthMiddleware(redisClient), rc.expertController.UpdateExpertAvailability)
+	router.GET("/category/:category", middleware.AuthMiddleware(redisClient), rc.expertController.GetExpertsByCategory)
 }
