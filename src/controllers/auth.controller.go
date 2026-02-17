@@ -59,10 +59,23 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
+	var expertProfile models.ExpertProfile
+	res := ac.DB.First(&expertProfile, "user_id = ?", user.ID)
+	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+	var expertProfileSummary *models.ExpertProfileSummaryResponse
+	if res.Error == nil {
+		summary := expertProfile.ToExpertProfileSummaryResponse()
+		expertProfileSummary = &summary
+	}
+
 	c.JSON(http.StatusOK, models.SuccessResponse("Login successful", models.LoginUserResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		User:         user.ToUserResponse(),
+		AccessToken:   accessToken,
+		RefreshToken:  refreshToken,
+		User:          user.ToUserResponse(),
+		ExpertProfile: expertProfileSummary,
 	}))
 }
 

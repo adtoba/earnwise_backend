@@ -18,5 +18,9 @@ func Migrate(DB *gorm.DB) {
 		&models.Review{},
 	)
 
+	// Ensure array columns use Postgres text[] type; AutoMigrate won't alter types.
+	DB.Exec("ALTER TABLE IF EXISTS expert_profiles ALTER COLUMN categories TYPE text[] USING categories::text[]")
+	DB.Exec("ALTER TABLE IF EXISTS expert_profiles ALTER COLUMN faq TYPE text[] USING faq::text[]")
+
 	log.Println("Database migrated successfully")
 }

@@ -15,9 +15,9 @@ type ExpertProfile struct {
 	UserID             string           `json:"user_id"`
 	User               User             `json:"user" gorm:"foreignKey:UserID;references:ID"`
 	ProfessionalTitle  string           `json:"professional_title"`
-	Categories         StringArray      `json:"categories"`
+	Categories         StringArray      `json:"categories" gorm:"type:text[]"`
 	Bio                string           `json:"bio"`
-	Faq                StringArray      `json:"faq"`
+	Faq                StringArray      `json:"faq" gorm:"type:text[]"`
 	Rates              Rates            `json:"rates" gorm:"type:jsonb"`
 	Availability       AvailabilityList `json:"availability" gorm:"type:jsonb"`
 	Socials            Socials          `json:"socials" gorm:"type:jsonb"`
@@ -52,6 +52,30 @@ func (e *ExpertProfile) ToExpertProfileResponse() ExpertProfileResponse {
 		CreatedAt:          e.CreatedAt,
 		UpdatedAt:          e.UpdatedAt,
 	}
+}
+
+func (e *ExpertProfile) ToExpertProfileSummaryResponse() ExpertProfileSummaryResponse {
+	return ExpertProfileSummaryResponse{
+		ID:                 e.ID,
+		ProfessionalTitle:  e.ProfessionalTitle,
+		Categories:         e.Categories,
+		Bio:                e.Bio,
+		Faq:                e.Faq,
+		Rates:              e.Rates,
+		Availability:       e.Availability,
+		VerificationStatus: e.VerificationStatus,
+		ReviewsCount:       e.ReviewsCount,
+		Rating:             e.Rating,
+		Socials:            e.Socials,
+		TotalConsultations: e.TotalConsultations,
+		CreatedAt:          e.CreatedAt,
+		UpdatedAt:          e.UpdatedAt,
+	}
+}
+
+type ExpertDashboardResponse struct {
+	ExpertProfile ExpertProfileResponse `json:"expert_profile"`
+	Wallet        Wallet                `json:"wallet"`
 }
 
 type Rates struct {
@@ -199,6 +223,23 @@ type UpdateExpertAvailabilityRequest struct {
 type ExpertProfileResponse struct {
 	ID                 string           `json:"id"`
 	User               UserResponse     `json:"user"`
+	ProfessionalTitle  string           `json:"professional_title"`
+	Categories         StringArray      `json:"categories"`
+	Bio                string           `json:"bio"`
+	Faq                StringArray      `json:"faq"`
+	Rates              Rates            `json:"rates"`
+	Availability       AvailabilityList `json:"availability"`
+	Socials            Socials          `json:"socials"`
+	VerificationStatus string           `json:"verification_status"`
+	Rating             float64          `json:"rating"`
+	ReviewsCount       int              `json:"reviews_count"`
+	TotalConsultations int              `json:"total_consultations"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at"`
+}
+
+type ExpertProfileSummaryResponse struct {
+	ID                 string           `json:"id"`
 	ProfessionalTitle  string           `json:"professional_title"`
 	Categories         StringArray      `json:"categories"`
 	Bio                string           `json:"bio"`

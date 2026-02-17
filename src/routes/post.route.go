@@ -21,4 +21,8 @@ func (rc *PostRouteController) RegisterPostRoutes(rg *gin.RouterGroup, redisClie
 	router.GET("/", middleware.AuthMiddleware(redisClient), rc.postController.GetPosts)
 	router.GET("/:id", middleware.AuthMiddleware(redisClient), rc.postController.GetPostById)
 	router.GET("/expert/:id", middleware.AuthMiddleware(redisClient), rc.postController.GetPostsByExpertId)
+	router.GET("/comments/:id", middleware.AuthMiddleware(redisClient), rc.postController.GetCommentsByPostId)
+	router.POST("/comments", middleware.AuthMiddleware(redisClient), rc.postController.CreateComment)
+	router.POST("/like-post", middleware.AuthMiddleware(redisClient), rc.postController.LikePost)
+	router.POST("/like-comment", middleware.AuthMiddleware(redisClient), rc.postController.LikeComment)
 }

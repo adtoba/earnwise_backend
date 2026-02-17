@@ -5,6 +5,7 @@ import (
 
 	"github.com/adtoba/earnwise_backend/src/models"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -53,6 +54,29 @@ func (ec *ExpertController) CreateExpertProfile(c *gin.Context) {
 	ec.WalletController.CreateWallet(c, expertProfile.ID)
 
 	c.JSON(http.StatusOK, models.SuccessResponse("Expert profile created successfully", expertProfile))
+}
+
+func (ec *ExpertController) GetExpertDashboard(c *gin.Context) {
+	var expertProfile models.ExpertProfile
+	result := ec.DB.Preload("User").First(&expertProfile, "user_id = ?", c.MustGet("user_id").(string))
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	var wallet models.Wallet
+	result = ec.DB.First(&wallet, "user_id = ?", c.MustGet("user_id").(string))
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	expertDashboardResponse := models.ExpertDashboardResponse{
+		ExpertProfile: expertProfile.ToExpertProfileResponse(),
+		Wallet:        wallet,
+	}
+
+	c.JSON(http.StatusOK, models.SuccessResponse("Expert dashboard fetched successfully", expertDashboardResponse))
 }
 
 func (ec *ExpertController) UpdateExpertRate(c *gin.Context) {
@@ -190,10 +214,20 @@ func (ec *ExpertController) GetExpertProfile(c *gin.Context) {
 
 func (ec *ExpertController) GetExpertsByCategory(c *gin.Context) {
 	var experts []models.ExpertProfile
-	result := ec.DB.Preload("User").Where("categories @> ?", c.Param("category")).Find(&experts)
+	category := c.Param("category")
+	currentUserID := c.MustGet("user_id").(string)
+	result := ec.DB.Preload("User").
+		Where("categories @> ?", pq.Array([]string{category})).
+		Where("user_id <> ?", currentUserID).
+		Find(&experts)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
 	}
-	c.JSON(http.StatusOK, models.SuccessResponse("Experts fetched successfully", experts))
+
+	var expertResponses []models.ExpertProfileResponse
+	for _, expert := range experts {
+		expertResponses = append(expertResponses, expert.ToExpertProfileResponse())
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Experts fetched successfully", expertResponses))
 }

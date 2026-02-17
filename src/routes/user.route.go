@@ -19,6 +19,7 @@ func (rc *UserRouteController) RegisterUserRoutes(rg *gin.RouterGroup, redisClie
 	router := rg.Group("/users")
 	router.GET("/:id", rc.userController.GetUserById)
 	router.PUT("/", middleware.AuthMiddleware(redisClient), rc.userController.UpdateUser)
+	router.GET("/profile", middleware.AuthMiddleware(redisClient), rc.userController.GetUserProfile)
 	router.POST("/save-expert", middleware.AuthMiddleware(redisClient), rc.userController.SaveExpert)
 	router.GET("/saved-experts", middleware.AuthMiddleware(redisClient), rc.userController.GetSavedExperts)
 }

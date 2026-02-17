@@ -92,18 +92,25 @@ type LoginUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Gender         string `json:"gender" binding:"required"`
-	PhoneNumber    string `json:"phone_number" binding:"required"`
-	ProfilePicture string `json:"profile_picture"`
-	Country        string `json:"country" binding:"required"`
-	State          string `json:"state" binding:"required"`
-	City           string `json:"city" binding:"required"`
-	Address        string `json:"address" binding:"required"`
-	Zip            string `json:"zip" binding:"required"`
+	Gender         string    `json:"gender" binding:"required"`
+	DOB            time.Time `json:"dob"`
+	PhoneNumber    string    `json:"phone_number" binding:"required"`
+	ProfilePicture string    `json:"profile_picture"`
+	Country        string    `json:"country" binding:"required"`
+	State          string    `json:"state" binding:"required"`
+	City           string    `json:"city" binding:"required"`
+	Address        string    `json:"address" binding:"required"`
+	Zip            string    `json:"zip" binding:"required"`
 }
 
 type LoginUserResponse struct {
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	User         UserResponse `json:"user"`
+	AccessToken   string                        `json:"access_token"`
+	RefreshToken  string                        `json:"refresh_token"`
+	User          UserResponse                  `json:"user"`
+	ExpertProfile *ExpertProfileSummaryResponse `json:"expert_profile"`
+}
+
+type UserProfileResponse struct {
+	User          UserResponse                  `json:"user"`
+	ExpertProfile *ExpertProfileSummaryResponse `json:"expert_profile"`
 }

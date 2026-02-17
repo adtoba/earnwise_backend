@@ -50,6 +50,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	user.Address = payload.Address
 	user.Zip = payload.Zip
 	user.ProfilePicture = payload.ProfilePicture
+	user.DOB = payload.DOB
 
 	res := uc.DB.Save(&user)
 	if res.Error != nil {
@@ -104,4 +105,31 @@ func (uc *UserController) GetSavedExperts(c *gin.Context) {
 		experts = append(experts, expert)
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("Saved experts fetched successfully", experts))
+}
+
+func (uc *UserController) GetUserProfile(c *gin.Context) {
+	var user models.User
+	result := uc.DB.First(&user, "id = ?", c.MustGet("user_id").(string))
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	var expertProfile models.ExpertProfile
+	res := uc.DB.First(&expertProfile, "user_id = ?", user.ID)
+	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	var expertProfileSummary *models.ExpertProfileSummaryResponse
+	if res.Error == nil {
+		summary := expertProfile.ToExpertProfileSummaryResponse()
+		expertProfileSummary = &summary
+	}
+
+	c.JSON(http.StatusOK, models.SuccessResponse("User profile fetched successfully", models.UserProfileResponse{
+		User:          user.ToUserResponse(),
+		ExpertProfile: expertProfileSummary,
+	}))
 }

@@ -93,6 +93,8 @@ func main() {
 		ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// server.RedirectTrailingSlash = false
+
 	v1 := server.Group("/api/v1")
 	AuthRouteController.RegisterAuthRoutes(v1)
 	CategoryRouteController.RegisterCategoryRoutes(v1)
