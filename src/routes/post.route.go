@@ -19,6 +19,7 @@ func (rc *PostRouteController) RegisterPostRoutes(rg *gin.RouterGroup, redisClie
 	router := rg.Group("/posts")
 	router.POST("/", middleware.AuthMiddleware(redisClient), rc.postController.CreatePost)
 	router.GET("/", middleware.AuthMiddleware(redisClient), rc.postController.GetPosts)
+	router.GET("/recommended", middleware.AuthMiddleware(redisClient), rc.postController.GetRandomPosts)
 	router.GET("/:id", middleware.AuthMiddleware(redisClient), rc.postController.GetPostById)
 	router.GET("/expert/:id", middleware.AuthMiddleware(redisClient), rc.postController.GetPostsByExpertId)
 	router.GET("/comments/:id", middleware.AuthMiddleware(redisClient), rc.postController.GetCommentsByPostId)

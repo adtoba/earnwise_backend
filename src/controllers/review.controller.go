@@ -70,9 +70,19 @@ func (rc *ReviewController) CreateReview(c *gin.Context) {
 	c.JSON(http.StatusOK, models.SuccessResponse("Review created successfully", review))
 }
 
+func (rc *ReviewController) GetReviews(c *gin.Context) {
+	var reviews []models.Review
+	result := rc.DB.Where("comment <> ''").Order("created_at DESC").Find(&reviews)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Reviews fetched successfully", reviews))
+}
+
 func (rc *ReviewController) GetReviewsByUserId(c *gin.Context) {
 	var reviews []models.Review
-	result := rc.DB.Where("user_id = ?", c.Param("id")).Find(&reviews)
+	result := rc.DB.Where("user_id = ?", c.Param("id")).Where("comment <> ''").Order("created_at DESC").Find(&reviews)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
@@ -82,7 +92,7 @@ func (rc *ReviewController) GetReviewsByUserId(c *gin.Context) {
 
 func (rc *ReviewController) GetReviewsByExpertId(c *gin.Context) {
 	var reviews []models.Review
-	result := rc.DB.Where("expert_id = ?", c.Param("id")).Find(&reviews)
+	result := rc.DB.Where("expert_id = ?", c.Param("id")).Where("comment <> ''").Order("created_at DESC").Find(&reviews)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return

@@ -54,6 +54,21 @@ func (pc *PostController) GetPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, models.SuccessResponse("Posts fetched successfully", posts))
 }
 
+func (pc *PostController) GetRandomPosts(c *gin.Context) {
+	var posts []models.Post
+	currentUserID := c.MustGet("user_id").(string)
+	result := pc.DB.Preload("User").
+		Where("user_id <> ?", currentUserID).
+		Order("RANDOM()").
+		Limit(10).
+		Find(&posts)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Random posts fetched successfully", posts))
+}
+
 func (pc *PostController) GetPostById(c *gin.Context) {
 	var post models.Post
 	result := pc.DB.Preload("User").Where("id = ?", c.Param("id")).First(&post)

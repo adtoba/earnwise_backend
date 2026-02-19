@@ -231,3 +231,18 @@ func (ec *ExpertController) GetExpertsByCategory(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("Experts fetched successfully", expertResponses))
 }
+
+func (ec *ExpertController) GetRecommendedTopExperts(c *gin.Context) {
+	var experts []models.ExpertProfile
+	result := ec.DB.Preload("User").Order("rating DESC").Limit(10).Find(&experts)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	var expertResponses []models.ExpertProfileResponse
+	for _, expert := range experts {
+		expertResponses = append(expertResponses, expert.ToExpertProfileResponse())
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Recommended top experts fetched successfully", expertResponses))
+}

@@ -17,6 +17,7 @@ func NewReviewRouteController(reviewController controllers.ReviewController) *Re
 
 func (rc *ReviewRouteController) RegisterReviewRoutes(rg *gin.RouterGroup, redisClient *redis.Client) {
 	router := rg.Group("/reviews")
+	router.GET("/", middleware.AuthMiddleware(redisClient), rc.reviewController.GetReviews)
 	router.POST("/", middleware.AuthMiddleware(redisClient), rc.reviewController.CreateReview)
 	router.GET("/expert/:id", middleware.AuthMiddleware(redisClient), rc.reviewController.GetReviewsByExpertId)
 	router.GET("/user/:id", middleware.AuthMiddleware(redisClient), rc.reviewController.GetReviewsByUserId)
