@@ -72,7 +72,7 @@ func (rc *ReviewController) CreateReview(c *gin.Context) {
 
 func (rc *ReviewController) GetReviews(c *gin.Context) {
 	var reviews []models.Review
-	result := rc.DB.Where("comment <> ''").Order("created_at DESC").Find(&reviews)
+	result := rc.DB.Where("comment <> ''").Where("user_id = ?", c.MustGet("user_id").(string)).Order("created_at DESC").Find(&reviews)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return

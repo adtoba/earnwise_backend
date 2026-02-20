@@ -49,7 +49,6 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 	user.City = payload.City
 	user.Address = payload.Address
 	user.Zip = payload.Zip
-	user.ProfilePicture = payload.ProfilePicture
 	user.DOB = payload.DOB
 
 	res := uc.DB.Save(&user)
@@ -58,6 +57,34 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("User updated successfully", user.ToUserResponse()))
+}
+
+func (uc *UserController) UpdateUserProfilePicture(c *gin.Context) {
+	var payload models.UpdateUserProfilePictureRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", err.Error()))
+		return
+	}
+
+	var user models.User
+	result := uc.DB.First(&user, "id = ?", c.MustGet("user_id").(string))
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	user.ProfilePicture = payload.ProfilePicture
+
+	res := uc.DB.Save(&user)
+	if res.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", res.Error.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("User profile picture updated successfully", user.ToUserResponse()))
+}
+
+type UpdateUserProfilePictureRequest struct {
+	ProfilePicture string `json:"profile_picture" binding:"required"`
 }
 
 func (uc *UserController) SaveExpert(c *gin.Context) {
@@ -84,6 +111,28 @@ func (uc *UserController) SaveExpert(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("Expert saved successfully", savedExpert))
+}
+
+func (uc *UserController) UnsaveExpert(c *gin.Context) {
+	var payload models.UnsaveExpertRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", err.Error()))
+		return
+	}
+
+	var savedExpert models.SavedExpert
+	result := uc.DB.First(&savedExpert, "user_id = ? AND expert_id = ?", c.MustGet("user_id").(string), payload.ExpertID)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	res := uc.DB.Delete(&savedExpert)
+	if res.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", res.Error.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Expert unsaved successfully", savedExpert))
 }
 
 func (uc *UserController) GetSavedExperts(c *gin.Context) {

@@ -16,6 +16,7 @@ func Migrate(DB *gorm.DB) {
 		&models.Post{},
 		&models.Comment{},
 		&models.Review{},
+		&models.SavedExpert{},
 	)
 
 	// Ensure array columns use Postgres text[] type; AutoMigrate won't alter types.

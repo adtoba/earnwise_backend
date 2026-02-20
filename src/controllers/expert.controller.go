@@ -198,8 +198,16 @@ func (ec *ExpertController) GetExpertProfileById(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
 	}
+	currentUserID := c.MustGet("user_id").(string)
+	savedMap, err := ec.getSavedExpertMap(currentUserID, []string{expertProfile.ID})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", err.Error()))
+		return
+	}
 
-	c.JSON(http.StatusOK, models.SuccessResponse("Expert profile fetched successfully", expertProfile.ToExpertProfileResponse()))
+	expertResponse := expertProfile.ToExpertProfileResponse()
+	expertResponse.IsSaved = savedMap[expertProfile.ID]
+	c.JSON(http.StatusOK, models.SuccessResponse("Expert profile fetched successfully", expertResponse))
 }
 
 func (ec *ExpertController) GetExpertProfile(c *gin.Context) {
@@ -226,23 +234,65 @@ func (ec *ExpertController) GetExpertsByCategory(c *gin.Context) {
 	}
 
 	var expertResponses []models.ExpertProfileResponse
+	expertIDs := make([]string, 0, len(experts))
 	for _, expert := range experts {
-		expertResponses = append(expertResponses, expert.ToExpertProfileResponse())
+		expertIDs = append(expertIDs, expert.ID)
+	}
+	savedMap, err := ec.getSavedExpertMap(currentUserID, expertIDs)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", err.Error()))
+		return
+	}
+	for _, expert := range experts {
+		expertResponse := expert.ToExpertProfileResponse()
+		expertResponse.IsSaved = savedMap[expert.ID]
+		expertResponses = append(expertResponses, expertResponse)
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("Experts fetched successfully", expertResponses))
 }
 
 func (ec *ExpertController) GetRecommendedTopExperts(c *gin.Context) {
 	var experts []models.ExpertProfile
-	result := ec.DB.Preload("User").Order("rating DESC").Limit(10).Find(&experts)
+	currentUserID := c.MustGet("user_id").(string)
+	result := ec.DB.Preload("User").Order("rating DESC").Limit(10).Where("user_id <> ?", currentUserID).Find(&experts)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
 	}
 
 	var expertResponses []models.ExpertProfileResponse
+	expertIDs := make([]string, 0, len(experts))
 	for _, expert := range experts {
-		expertResponses = append(expertResponses, expert.ToExpertProfileResponse())
+		expertIDs = append(expertIDs, expert.ID)
+	}
+	savedMap, err := ec.getSavedExpertMap(currentUserID, expertIDs)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", err.Error()))
+		return
+	}
+	for _, expert := range experts {
+		expertResponse := expert.ToExpertProfileResponse()
+		expertResponse.IsSaved = savedMap[expert.ID]
+		expertResponses = append(expertResponses, expertResponse)
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("Recommended top experts fetched successfully", expertResponses))
+}
+
+func (ec *ExpertController) getSavedExpertMap(userID string, expertIDs []string) (map[string]bool, error) {
+	savedMap := make(map[string]bool)
+	if len(expertIDs) == 0 {
+		return savedMap, nil
+	}
+
+	var savedExperts []models.SavedExpert
+	result := ec.DB.Where("user_id = ? AND expert_id IN ?", userID, expertIDs).Find(&savedExperts)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	for _, savedExpert := range savedExperts {
+		savedMap[savedExpert.ExpertID] = true
+	}
+
+	return savedMap, nil
 }

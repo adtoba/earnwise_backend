@@ -44,6 +44,7 @@ type UserResponse struct {
 	Zip             string    `json:"zip"`
 	Country         string    `json:"country"`
 	Role            string    `json:"role"`
+	ProfilePicture  string    `json:"profile_picture"`
 	IsBlocked       bool      `json:"is_blocked"`
 	IsEmailVerified bool      `json:"is_email_verified"`
 	IsPhoneVerified bool      `json:"is_phone_verified"`
@@ -71,6 +72,7 @@ func (user *User) ToUserResponse() UserResponse {
 		Zip:             user.Zip,
 		Country:         user.Country,
 		Role:            user.Role,
+		ProfilePicture:  user.ProfilePicture,
 		IsBlocked:       user.IsBlocked,
 		IsEmailVerified: user.IsEmailVerified,
 		IsPhoneVerified: user.IsPhoneVerified,
@@ -101,6 +103,10 @@ type UpdateUserRequest struct {
 	City           string    `json:"city" binding:"required"`
 	Address        string    `json:"address" binding:"required"`
 	Zip            string    `json:"zip" binding:"required"`
+}
+
+type UpdateUserProfilePictureRequest struct {
+	ProfilePicture string `json:"profile_picture" binding:"required"`
 }
 
 type LoginUserResponse struct {

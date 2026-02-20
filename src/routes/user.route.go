@@ -20,6 +20,8 @@ func (rc *UserRouteController) RegisterUserRoutes(rg *gin.RouterGroup, redisClie
 	router.GET("/:id", rc.userController.GetUserById)
 	router.PUT("/", middleware.AuthMiddleware(redisClient), rc.userController.UpdateUser)
 	router.GET("/profile", middleware.AuthMiddleware(redisClient), rc.userController.GetUserProfile)
+	router.PUT("/profile-picture", middleware.AuthMiddleware(redisClient), rc.userController.UpdateUserProfilePicture)
 	router.POST("/save-expert", middleware.AuthMiddleware(redisClient), rc.userController.SaveExpert)
+	router.DELETE("/unsave-expert", middleware.AuthMiddleware(redisClient), rc.userController.UnsaveExpert)
 	router.GET("/saved-experts", middleware.AuthMiddleware(redisClient), rc.userController.GetSavedExperts)
 }

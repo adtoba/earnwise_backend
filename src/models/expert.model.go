@@ -186,6 +186,10 @@ type SaveExpertRequest struct {
 	ExpertID string `json:"expert_id" binding:"required"`
 }
 
+type UnsaveExpertRequest struct {
+	ExpertID string `json:"expert_id" binding:"required"`
+}
+
 type CreateExpertProfileRequest struct {
 	ProfessionalTitle string           `json:"professional_title" binding:"required"`
 	Categories        StringArray      `json:"categories" binding:"required"`
@@ -232,6 +236,7 @@ type ExpertProfileResponse struct {
 	Socials            Socials          `json:"socials"`
 	VerificationStatus string           `json:"verification_status"`
 	Rating             float64          `json:"rating"`
+	IsSaved            bool             `json:"is_saved"`
 	ReviewsCount       int              `json:"reviews_count"`
 	TotalConsultations int              `json:"total_consultations"`
 	CreatedAt          time.Time        `json:"created_at"`
@@ -249,6 +254,7 @@ type ExpertProfileSummaryResponse struct {
 	Socials            Socials          `json:"socials"`
 	VerificationStatus string           `json:"verification_status"`
 	Rating             float64          `json:"rating"`
+	IsSaved            bool             `json:"is_saved"`
 	ReviewsCount       int              `json:"reviews_count"`
 	TotalConsultations int              `json:"total_consultations"`
 	CreatedAt          time.Time        `json:"created_at"`
