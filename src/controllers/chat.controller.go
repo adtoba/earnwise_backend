@@ -25,19 +25,28 @@ func (cc *ChatController) CreateChat(c *gin.Context) {
 		return
 	}
 
-	var chat models.Chat
-	chat.UserID = c.MustGet("user_id").(string)
-	chat.ExpertID = payload.ExpertID
+	// check if chat already exists between user and expert
 
-	result := cc.DB.Create(&chat)
+	var chat models.Chat
+	currentUserID := c.MustGet("user_id").(string)
+	result := cc.DB.First(&chat, "user_id = ? AND expert_id = ?", currentUserID, payload.ExpertID)
 	if result.Error != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
-		return
+		if result.Error != gorm.ErrRecordNotFound {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+			return
+		}
+		chat.UserID = currentUserID
+		chat.ExpertID = payload.ExpertID
+		result = cc.DB.Create(&chat)
+		if result.Error != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+			return
+		}
 	}
 
 	var message models.Message
 	message.ChatID = chat.ID
-	message.SenderID = c.MustGet("user_id").(string)
+	message.SenderID = currentUserID
 	message.ReceiverID = payload.ExpertID
 	message.Content = payload.Message
 	message.ResponseType = payload.ResponseType
