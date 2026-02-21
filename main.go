@@ -37,6 +37,9 @@ var (
 
 	ReviewController      *controllers.ReviewController
 	ReviewRouteController *routes.ReviewRouteController
+
+	ChatController      *controllers.ChatController
+	ChatRouteController *routes.ChatRouteController
 )
 
 func init() {
@@ -79,6 +82,9 @@ func init() {
 	ReviewController = controllers.NewReviewController(DB)
 	ReviewRouteController = routes.NewReviewRouteController(*ReviewController)
 
+	ChatController = controllers.NewChatController(DB)
+	ChatRouteController = routes.NewChatRouteController(*ChatController)
+
 	server = gin.Default()
 }
 
@@ -103,6 +109,7 @@ func main() {
 	WalletRouteController.RegisterWalletRoutes(v1, RedisClient)
 	PostRouteController.RegisterPostRoutes(v1, RedisClient)
 	ReviewRouteController.RegisterReviewRoutes(v1, RedisClient)
+	ChatRouteController.RegisterChatRoutes(v1, RedisClient)
 
 	log.Fatal(server.Run(":" + config.Port))
 }
