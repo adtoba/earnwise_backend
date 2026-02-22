@@ -20,6 +20,7 @@ func (rc *ChatRouteController) RegisterChatRoutes(rg *gin.RouterGroup, redisClie
 	router.POST("/", middleware.AuthMiddleware(redisClient), rc.chatController.CreateChat)
 	router.GET("/:id/messages", middleware.AuthMiddleware(redisClient), rc.chatController.GetChatMessages)
 	router.POST("/:id/messages", middleware.AuthMiddleware(redisClient), rc.chatController.CreateMessage)
+	router.PUT("/messages/:id", middleware.AuthMiddleware(redisClient), rc.chatController.EditMessage)
 	router.GET("/user", middleware.AuthMiddleware(redisClient), rc.chatController.GetUserChats)
 	router.GET("/expert", middleware.AuthMiddleware(redisClient), rc.chatController.GetExpertChats)
 }

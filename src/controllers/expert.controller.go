@@ -226,6 +226,7 @@ func (ec *ExpertController) GetExpertsByCategory(c *gin.Context) {
 	currentUserID := c.MustGet("user_id").(string)
 	result := ec.DB.Preload("User").
 		Where("categories @> ?", pq.Array([]string{category})).
+		Where("verification_status = ?", "approved").
 		Where("user_id <> ?", currentUserID).
 		Find(&experts)
 	if result.Error != nil {
@@ -254,7 +255,7 @@ func (ec *ExpertController) GetExpertsByCategory(c *gin.Context) {
 func (ec *ExpertController) GetRecommendedTopExperts(c *gin.Context) {
 	var experts []models.ExpertProfile
 	currentUserID := c.MustGet("user_id").(string)
-	result := ec.DB.Preload("User").Order("rating DESC").Limit(10).Where("user_id <> ?", currentUserID).Find(&experts)
+	result := ec.DB.Preload("User").Order("rating DESC").Limit(10).Where("user_id <> ?", currentUserID).Where("verification_status = ?", "approved").Find(&experts)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return

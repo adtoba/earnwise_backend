@@ -181,6 +181,9 @@ func (cc *ChatController) CreateMessage(c *gin.Context) {
 	message.ReceiverID = payload.ReceiverID
 	message.Content = payload.Content
 	message.ResponseType = payload.ResponseType
+	message.IsResponseTo = payload.IsResponseTo
+	message.ResponseToID = payload.ResponseToID
+	message.ContentType = payload.ContentType
 	message.Attachments = []string{}
 	message.IsRead = false
 
@@ -190,6 +193,32 @@ func (cc *ChatController) CreateMessage(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, models.SuccessResponse("Message created successfully", message))
+}
+
+func (cc *ChatController) EditMessage(c *gin.Context) {
+	messageID := c.Param("id")
+
+	var payload models.EditMessageRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", err.Error()))
+		return
+	}
+
+	var message models.Message
+	result := cc.DB.First(&message, "id = ?", messageID)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	message.Content = payload.Content
+	result = cc.DB.Save(&message)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Message edited successfully", message))
+
 }
 
 func sortChatsByLastMessage(chats []models.Chat, lastMessageByChatID map[string]models.Message) {
