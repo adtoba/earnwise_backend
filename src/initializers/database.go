@@ -9,11 +9,18 @@ import (
 )
 
 func ConnectDB(config *Config) *gorm.DB {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", config.DBHost, config.DBUsername, config.DBPassword, config.DBName, config.DBPort)
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require",
+		config.DBHost,
+		config.DBUsername,
+		config.DBPassword,
+		config.DBName,
+		config.DBPort,
+	)
 
 	DB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database")
+		log.Fatal("Failed to connect to database: ", err)
 	}
 
 	fmt.Println("Connected to database")
