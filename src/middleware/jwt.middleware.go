@@ -54,7 +54,7 @@ func AuthMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 			if !ok {
 				return nil, fmt.Errorf("invalid token signing method")
 			}
-			return []byte(config.JWT_SECRET), nil
+			return []byte(config.JWTSecret), nil
 		})
 
 		if err != nil {
