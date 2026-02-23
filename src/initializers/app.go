@@ -17,12 +17,26 @@ type Config struct {
 	Port          string `mapstructure:"PORT"`
 }
 
-func LoadConfig(path string) (config Config, err error) {
+func LoadConfig() (config Config, err error) {
 	// viper.AddConfigPath(path)
 	// viper.SetConfigName("app")
 	// viper.SetConfigType("env")
 
 	viper.AutomaticEnv()
+
+	// Explicitly bind environment variables
+	viper.BindEnv("POSTGRES_USER")
+	viper.BindEnv("POSTGRES_PASSWORD")
+	viper.BindEnv("POSTGRES_HOST")
+	viper.BindEnv("POSTGRES_PORT")
+	viper.BindEnv("POSTGRES_DB")
+	viper.BindEnv("POSTGRES_DB_ENDPOINT")
+	viper.BindEnv("JWT_SECRET")
+	viper.BindEnv("REDIS_ADDRESS")
+	viper.BindEnv("REDIS_USERNAME")
+	viper.BindEnv("REDIS_PASSWORD")
+	viper.BindEnv("REDIS_DB")
+	viper.BindEnv("PORT")
 
 	// err = viper.ReadInConfig()
 	// if err != nil {

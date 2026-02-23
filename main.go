@@ -43,7 +43,7 @@ var (
 )
 
 func init() {
-	config, err := initializers.LoadConfig(".")
+	config, err := initializers.LoadConfig()
 
 	if err != nil {
 		log.Fatal("Failed to load config:", err)

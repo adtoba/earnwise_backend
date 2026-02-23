@@ -21,7 +21,7 @@ func IsTokenBlacklisted(tokenString string, redisClient *redis.Client) bool {
 func AuthMiddleware(redisClient *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accessToken string
-		config, err := initializers.LoadConfig(".")
+		config, err := initializers.LoadConfig()
 
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal Server Error", nil))
