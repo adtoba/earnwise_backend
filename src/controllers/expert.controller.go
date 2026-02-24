@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/adtoba/earnwise_backend/src/models"
 	"github.com/gin-gonic/gin"
@@ -249,6 +250,50 @@ func (ec *ExpertController) GetExpertsByCategory(c *gin.Context) {
 		expertResponse.IsSaved = savedMap[expert.ID]
 		expertResponses = append(expertResponses, expertResponse)
 	}
+	c.JSON(http.StatusOK, models.SuccessResponse("Experts fetched successfully", expertResponses))
+}
+
+func (ec *ExpertController) SearchExperts(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("q"))
+	if query == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Search query is required", nil))
+		return
+	}
+
+	currentUserID := c.MustGet("user_id").(string)
+	searchTerm := "%" + query + "%"
+
+	var experts []models.ExpertProfile
+	result := ec.DB.Preload("User").
+		Joins("User").
+		Where("expert_profiles.user_id <> ?", currentUserID).
+		Where("verification_status = ?", "approved").
+		Where(
+			`users.first_name ILIKE ? OR users.last_name ILIKE ? OR (users.first_name || ' ' || users.last_name) ILIKE ? OR professional_title ILIKE ? OR bio ILIKE ? OR categories::text ILIKE ?`,
+			searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm,
+		).
+		Find(&experts)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	var expertResponses []models.ExpertProfileResponse
+	expertIDs := make([]string, 0, len(experts))
+	for _, expert := range experts {
+		expertIDs = append(expertIDs, expert.ID)
+	}
+	savedMap, err := ec.getSavedExpertMap(currentUserID, expertIDs)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", err.Error()))
+		return
+	}
+	for _, expert := range experts {
+		expertResponse := expert.ToExpertProfileResponse()
+		expertResponse.IsSaved = savedMap[expert.ID]
+		expertResponses = append(expertResponses, expertResponse)
+	}
+
 	c.JSON(http.StatusOK, models.SuccessResponse("Experts fetched successfully", expertResponses))
 }
 

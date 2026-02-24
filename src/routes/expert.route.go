@@ -19,6 +19,7 @@ func (rc *ExpertRouteController) RegisterExpertRoutes(rg *gin.RouterGroup, redis
 	router := rg.Group("/experts")
 	router.POST("/", middleware.AuthMiddleware(redisClient), rc.expertController.CreateExpertProfile)
 	router.GET("/dashboard", middleware.AuthMiddleware(redisClient), rc.expertController.GetExpertDashboard)
+	router.GET("/search", middleware.AuthMiddleware(redisClient), rc.expertController.SearchExperts)
 	router.GET("/:id", middleware.AuthMiddleware(redisClient), rc.expertController.GetExpertProfileById)
 	router.GET("/", middleware.AuthMiddleware(redisClient), rc.expertController.GetExpertProfile)
 	router.PUT("/rate", middleware.AuthMiddleware(redisClient), rc.expertController.UpdateExpertRate)

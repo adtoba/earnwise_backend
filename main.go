@@ -8,6 +8,7 @@ import (
 	"github.com/adtoba/earnwise_backend/src/initializers"
 	"github.com/adtoba/earnwise_backend/src/migrate"
 	"github.com/adtoba/earnwise_backend/src/routes"
+	"github.com/adtoba/earnwise_backend/src/services"
 	"github.com/adtoba/earnwise_backend/src/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -40,6 +41,8 @@ var (
 
 	ChatController      *controllers.ChatController
 	ChatRouteController *routes.ChatRouteController
+
+	NotificationService *services.NotificationService
 )
 
 func init() {
@@ -60,6 +63,8 @@ func init() {
 	})
 
 	tokenMaker := utils.NewJWTMaker(config.JWTSecret, RedisClient)
+
+	NotificationService = services.NewNotificationService(DB, config.OneSignalAppID, config.OneSignalAPIKey)
 
 	AuthController = controllers.NewAuthController(DB, tokenMaker, RedisClient)
 	AuthRouteController = routes.NewAuthRouteController(*AuthController)
