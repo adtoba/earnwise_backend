@@ -42,6 +42,9 @@ var (
 	ChatController      *controllers.ChatController
 	ChatRouteController *routes.ChatRouteController
 
+	CallController      *controllers.CallController
+	CallRouteController *routes.CallRouteController
+
 	NotificationService *services.NotificationService
 )
 
@@ -90,6 +93,9 @@ func init() {
 	ChatController = controllers.NewChatController(DB)
 	ChatRouteController = routes.NewChatRouteController(*ChatController)
 
+	CallController = controllers.NewCallController(DB)
+	CallRouteController = routes.NewCallRouteController(*CallController)
+
 	server = gin.Default()
 }
 
@@ -115,6 +121,7 @@ func main() {
 	PostRouteController.RegisterPostRoutes(v1, RedisClient)
 	ReviewRouteController.RegisterReviewRoutes(v1, RedisClient)
 	ChatRouteController.RegisterChatRoutes(v1, RedisClient)
+	CallRouteController.RegisterCallRoutes(v1, RedisClient)
 
 	log.Fatal(server.Run(":" + config.Port))
 }

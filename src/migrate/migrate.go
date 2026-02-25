@@ -17,6 +17,7 @@ func Migrate(DB *gorm.DB) {
 		&models.Comment{},
 		&models.Review{},
 		&models.SavedExpert{},
+		&models.Call{},
 		&models.Chat{},
 		&models.Message{},
 	)

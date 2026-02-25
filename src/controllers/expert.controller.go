@@ -2,9 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/adtoba/earnwise_backend/src/models"
+	"github.com/adtoba/earnwise_backend/src/services"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -265,7 +268,7 @@ func (ec *ExpertController) SearchExperts(c *gin.Context) {
 
 	var experts []models.ExpertProfile
 	result := ec.DB.Preload("User").
-		Joins("User").
+		Joins("JOIN users ON users.id = expert_profiles.user_id").
 		Where("expert_profiles.user_id <> ?", currentUserID).
 		Where("verification_status = ?", "approved").
 		Where(
@@ -341,4 +344,52 @@ func (ec *ExpertController) getSavedExpertMap(userID string, expertIDs []string)
 	}
 
 	return savedMap, nil
+}
+
+func (ec *ExpertController) GetExpertAvailableSlots(c *gin.Context) {
+	expertID := c.Param("id")
+
+	dateStr := c.Query("date")
+	durationMinsStr := c.Query("duration_mins")
+	timezone := c.Query("timezone")
+
+	if dateStr == "" || durationMinsStr == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", "date and duration_mins are required"))
+		return
+	}
+
+	duration, err := strconv.Atoi(durationMinsStr)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", "duration_mins must be an integer"))
+		return
+	}
+
+	if timezone == "" {
+		timezone = "Africa/Lagos"
+	}
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", "timezone is invalid"))
+		return
+	}
+
+	date, err := time.ParseInLocation("2006-01-02", dateStr, loc)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", "date must be in the format YYYY-MM-DD"))
+		return
+	}
+
+	slots, err := services.GetAvailableSlots(
+		ec.DB,
+		expertID,
+		date,
+		duration,
+		timezone,
+	)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, models.SuccessResponse("Expert available slots fetched successfully", slots))
 }
