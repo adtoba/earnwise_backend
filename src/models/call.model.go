@@ -31,6 +31,7 @@ type Call struct {
 	Description   string        `json:"description"`
 	DurationMins  int           `json:"duration_mins"`
 	Status        string        `json:"status" gorm:"default:pending"`
+	ChannelName   string        `json:"channel_name"`
 	Price         float64       `json:"price"`
 	PaymentStatus string        `json:"payment_status"`
 	PaymentRef    string        `json:"payment_ref"`
@@ -54,6 +55,11 @@ type CreateCallRequest struct {
 	Timezone     string    `json:"timezone"`
 }
 
+type GenerateTokenRequest struct {
+	IsUser   bool   `json:"is_user"`
+	ExpertID string `json:"expert_id"`
+}
+
 type CallResponse struct {
 	ID            string                `json:"id"`
 	UserID        string                `json:"user_id"`
@@ -69,6 +75,7 @@ type CallResponse struct {
 	Price         float64               `json:"price"`
 	PaymentStatus string                `json:"payment_status"`
 	PaymentRef    string                `json:"payment_ref"`
+	ChannelName   string                `json:"channel_name"`
 	CreatedAt     time.Time             `json:"created_at"`
 	UpdatedAt     time.Time             `json:"updated_at"`
 }
@@ -88,6 +95,7 @@ func (c *Call) ToCallResponse() CallResponse {
 		Price:         c.Price,
 		PaymentStatus: c.PaymentStatus,
 		PaymentRef:    c.PaymentRef,
+		ChannelName:   c.ChannelName,
 		CreatedAt:     c.CreatedAt,
 		UpdatedAt:     c.UpdatedAt,
 	}

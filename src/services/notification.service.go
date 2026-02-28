@@ -29,6 +29,10 @@ func (ns *NotificationService) SendNotification(message string, userID string, t
 		"contents": map[string]string{
 			"en": message,
 		},
+		// High priority for Android and iOS (OneSignal supports these fields)
+		"priority":       10,
+		"apns_priority":  "10",
+		"apns_push_type": "alert",
 		"target_channel": "push",
 		"app_id":         ns.AppID,
 		"include_aliases": map[string]interface{}{

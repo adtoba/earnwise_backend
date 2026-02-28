@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -11,13 +12,17 @@ import (
 )
 
 type CallController struct {
-	DB *gorm.DB
+	DB                  *gorm.DB
+	NotificationService *services.NotificationService
+	AgoraAppID          string
+	AgoraAppCertificate string
 }
 
 const callAcceptCutoffMinutes = 10
+const minCallLeadMinutes = 10
 
-func NewCallController(db *gorm.DB) *CallController {
-	return &CallController{DB: db}
+func NewCallController(db *gorm.DB, notificationService *services.NotificationService, agoraAppID string, agoraAppCertificate string) *CallController {
+	return &CallController{DB: db, NotificationService: notificationService, AgoraAppID: agoraAppID, AgoraAppCertificate: agoraAppCertificate}
 }
 
 func (cc *CallController) CreateCall(c *gin.Context) {
@@ -55,6 +60,12 @@ func (cc *CallController) CreateCall(c *gin.Context) {
 		0,
 		loc,
 	)
+	nowLocal := time.Now().In(loc)
+	minAllowed := nowLocal.Add(time.Duration(minCallLeadMinutes) * time.Minute)
+	if scheduledLocal.Before(minAllowed) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Call scheduled too soon", fmt.Sprintf("call must be scheduled at least %d minutes in advance", minCallLeadMinutes)))
+		return
+	}
 	payload.ScheduledAt = scheduledLocal.UTC()
 	payload.Price = float64(payload.DurationMins) * expert.Rates.Video
 
@@ -63,6 +74,12 @@ func (cc *CallController) CreateCall(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", err.Error()))
 		return
 	}
+
+	fmt.Println(expert.UserID)
+
+	message := "You have a new call request scheduled for " + scheduledLocal.Format("2006-01-02 15:04:05") + ". Go to your dashboard to accept or reject now!"
+
+	cc.NotificationService.SendNotification(message, expert.UserID, "New Call Alert")
 
 	c.JSON(http.StatusOK, models.SuccessResponse("Call created successfully", call))
 }
@@ -79,29 +96,41 @@ func (cc *CallController) GetUserCalls(c *gin.Context) {
 		return
 	}
 
-	switch status {
-	case models.CallStatusPending:
-		status = models.CallStatusPending
-	case models.CallStatusAccepted:
-		status = models.CallStatusAccepted
-	case models.CallStatusRejected:
-		status = models.CallStatusRejected
-	case models.CallStatusCancelled:
-		status = models.CallStatusCancelled
-	case models.CallStatusExpired:
-		status = models.CallStatusExpired
-	case models.CallStatusCompleted:
-		status = models.CallStatusCompleted
-	default:
-		status = models.CallStatusPending
+	if status != "past" {
+		switch status {
+		case models.CallStatusPending:
+			status = models.CallStatusPending
+		case models.CallStatusAccepted:
+			status = models.CallStatusAccepted
+		case models.CallStatusRejected:
+			status = models.CallStatusRejected
+		case models.CallStatusCancelled:
+			status = models.CallStatusCancelled
+		case models.CallStatusExpired:
+			status = models.CallStatusExpired
+		case models.CallStatusCompleted:
+			status = models.CallStatusCompleted
+		default:
+			status = models.CallStatusPending
+		}
 	}
 
 	var calls []models.Call
-	result := cc.DB.Preload("User").Preload("Expert").Preload("Expert.User").
-		Where("user_id = ?", userID).
-		Where("status = ?", status).
-		Order("scheduled_at ASC").
-		Find(&calls)
+	query := cc.DB.Preload("User").Preload("Expert").Preload("Expert.User").
+		Where("user_id = ?", userID)
+	if status == "past" {
+		query = query.
+			Where("scheduled_at + (duration_mins * interval '1 minute') < ?", time.Now().UTC()).
+			Order("scheduled_at DESC")
+	} else {
+		query = query.
+			Where("status = ?", status).
+			Order("scheduled_at ASC")
+		if status == models.CallStatusAccepted {
+			query = query.Where("scheduled_at + (duration_mins * interval '1 minute') >= ?", time.Now().UTC())
+		}
+	}
+	result := query.Find(&calls)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
@@ -122,21 +151,23 @@ func (cc *CallController) GetExpertCalls(c *gin.Context) {
 		status = models.CallStatusPending
 	}
 
-	switch status {
-	case models.CallStatusPending:
-		status = models.CallStatusPending
-	case models.CallStatusAccepted:
-		status = models.CallStatusAccepted
-	case models.CallStatusRejected:
-		status = models.CallStatusRejected
-	case models.CallStatusCancelled:
-		status = models.CallStatusCancelled
-	case models.CallStatusExpired:
-		status = models.CallStatusExpired
-	case models.CallStatusCompleted:
-		status = models.CallStatusCompleted
-	default:
-		status = models.CallStatusPending
+	if status != "past" {
+		switch status {
+		case models.CallStatusPending:
+			status = models.CallStatusPending
+		case models.CallStatusAccepted:
+			status = models.CallStatusAccepted
+		case models.CallStatusRejected:
+			status = models.CallStatusRejected
+		case models.CallStatusCancelled:
+			status = models.CallStatusCancelled
+		case models.CallStatusExpired:
+			status = models.CallStatusExpired
+		case models.CallStatusCompleted:
+			status = models.CallStatusCompleted
+		default:
+			status = models.CallStatusPending
+		}
 	}
 
 	var expert models.ExpertProfile
@@ -152,11 +183,21 @@ func (cc *CallController) GetExpertCalls(c *gin.Context) {
 	}
 
 	var calls []models.Call
-	result = cc.DB.Preload("User").Preload("Expert").Preload("Expert.User").
-		Where("expert_id = ?", expert.ID).
-		Where("status = ?", status).
-		Order("scheduled_at ASC").
-		Find(&calls)
+	query := cc.DB.Preload("User").Preload("Expert").Preload("Expert.User").
+		Where("expert_id = ?", expert.ID)
+	if status == "past" {
+		query = query.
+			Where("scheduled_at + (duration_mins * interval '1 minute') < ?", time.Now().UTC()).
+			Order("scheduled_at DESC")
+	} else {
+		query = query.
+			Where("status = ?", status).
+			Order("scheduled_at ASC")
+		if status == models.CallStatusAccepted {
+			query = query.Where("scheduled_at + (duration_mins * interval '1 minute') >= ?", time.Now().UTC())
+		}
+	}
+	result = query.Find(&calls)
 	if result.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
@@ -188,13 +229,26 @@ func (cc *CallController) AcceptCall(c *gin.Context) {
 		return
 	}
 
-	res := cc.DB.Model(&call).Updates(map[string]interface{}{
+	res := cc.DB.Model(&models.Call{}).Where("id = ?", call.ID).Updates(map[string]interface{}{
 		"status": models.CallStatusAccepted,
 	})
 	if res.Error != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", res.Error.Error()))
 		return
 	}
+
+	result = cc.DB.Preload("Expert.User").First(&call, "id = ?", call.ID)
+	if result.Error != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
+		return
+	}
+
+	message := "Your call request with " +
+		call.Expert.User.FirstName + " " + call.Expert.User.LastName + " " +
+		" has been accepted. Please prepare for the call at " + call.ScheduledAt.Format("2006-01-02 15:04:05") + ". Go to your dashboard to view the call details."
+
+	cc.NotificationService.SendNotification(message, call.UserID, "Call Request Accepted")
+
 	c.JSON(http.StatusOK, models.SuccessResponse("Call accepted successfully", call.ToCallResponse()))
 }
 
@@ -209,4 +263,14 @@ func (cc *CallController) expirePendingCalls(where string, args ...interface{}) 
 			"payment_status": models.PaymentStatusReleased,
 		})
 	return result.Error
+}
+
+func (cc *CallController) GenerateCallToken(c *gin.Context) {
+	callID := c.Param("id")
+	var payload models.GenerateTokenRequest
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, models.ErrorResponse("Invalid request payload", err.Error()))
+		return
+	}
+	services.GenerateCallToken(cc.DB, callID, cc.AgoraAppID, cc.AgoraAppCertificate, payload.IsUser, payload.ExpertID)(c)
 }

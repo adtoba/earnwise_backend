@@ -5,16 +5,18 @@ import (
 	"sort"
 
 	"github.com/adtoba/earnwise_backend/src/models"
+	"github.com/adtoba/earnwise_backend/src/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type ChatController struct {
-	DB *gorm.DB
+	DB                  *gorm.DB
+	NotificationService *services.NotificationService
 }
 
-func NewChatController(db *gorm.DB) *ChatController {
-	return &ChatController{DB: db}
+func NewChatController(db *gorm.DB, notificationService *services.NotificationService) *ChatController {
+	return &ChatController{DB: db, NotificationService: notificationService}
 }
 
 func (cc *ChatController) CreateChat(c *gin.Context) {
@@ -58,6 +60,9 @@ func (cc *ChatController) CreateChat(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse("Internal server error", result.Error.Error()))
 		return
 	}
+
+	notificationMessage := "You have a new message. Go to your dashboard to view the message."
+	cc.NotificationService.SendNotification(notificationMessage, payload.ExpertUserID, "New Message Alert")
 
 	c.JSON(http.StatusOK, models.SuccessResponse("Chat created successfully", chat))
 }

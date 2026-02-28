@@ -72,6 +72,13 @@ func CreateCall(
 			return err
 		}
 
+		channelName := "call_" + call.ID
+		if err := tx.Model(&models.Call{}).Where("id = ?", call.ID).Updates(map[string]interface{}{
+			"channel_name": channelName,
+		}).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 

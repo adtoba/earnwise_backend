@@ -69,7 +69,7 @@ func init() {
 
 	NotificationService = services.NewNotificationService(DB, config.OneSignalAppID, config.OneSignalAPIKey)
 
-	AuthController = controllers.NewAuthController(DB, tokenMaker, RedisClient)
+	AuthController = controllers.NewAuthController(DB, tokenMaker, RedisClient, config.GoogleWebClientID)
 	AuthRouteController = routes.NewAuthRouteController(*AuthController)
 
 	CategoryController = controllers.NewCategoryController(DB)
@@ -90,10 +90,10 @@ func init() {
 	ReviewController = controllers.NewReviewController(DB)
 	ReviewRouteController = routes.NewReviewRouteController(*ReviewController)
 
-	ChatController = controllers.NewChatController(DB)
+	ChatController = controllers.NewChatController(DB, NotificationService)
 	ChatRouteController = routes.NewChatRouteController(*ChatController)
 
-	CallController = controllers.NewCallController(DB)
+	CallController = controllers.NewCallController(DB, NotificationService, config.AgoraAppID, config.AgoraAppCertificate)
 	CallRouteController = routes.NewCallRouteController(*CallController)
 
 	server = gin.Default()

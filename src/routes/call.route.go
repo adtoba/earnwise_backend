@@ -21,4 +21,5 @@ func (rc *CallRouteController) RegisterCallRoutes(rg *gin.RouterGroup, redisClie
 	router.GET("/user", middleware.AuthMiddleware(redisClient), rc.callController.GetUserCalls)
 	router.GET("/expert", middleware.AuthMiddleware(redisClient), rc.callController.GetExpertCalls)
 	router.PUT("/:id/accept", middleware.AuthMiddleware(redisClient), rc.callController.AcceptCall)
+	router.POST("/:id/token", middleware.AuthMiddleware(redisClient), rc.callController.GenerateCallToken)
 }

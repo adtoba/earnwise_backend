@@ -48,6 +48,7 @@ type ChatResponse struct {
 
 type CreateChatRequest struct {
 	ExpertID     string `json:"expert_id" binding:"required"`
+	ExpertUserID string `json:"expert_user_id" binding:"required"`
 	Message      string `json:"message" binding:"required"`
 	ResponseType string `json:"response_type" binding:"required"`
 }

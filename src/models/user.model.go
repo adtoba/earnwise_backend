@@ -9,6 +9,7 @@ import (
 
 type User struct {
 	ID              string    `json:"id" gorm:"primaryKey"`
+	GoogleID        string    `json:"google_id"`
 	FirstName       string    `json:"first_name"`
 	LastName        string    `json:"last_name"`
 	Email           string    `json:"email" gorm:"unique"`
@@ -34,6 +35,7 @@ type UserResponse struct {
 	ID              string    `json:"id"`
 	FirstName       string    `json:"first_name"`
 	LastName        string    `json:"last_name"`
+	GoogleID        string    `json:"google_id"`
 	Email           string    `json:"email"`
 	Gender          string    `json:"gender"`
 	DOB             time.Time `json:"dob"`
@@ -62,6 +64,7 @@ func (user *User) ToUserResponse() UserResponse {
 		ID:              user.ID,
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,
+		GoogleID:        user.GoogleID,
 		Email:           user.Email,
 		Gender:          user.Gender,
 		DOB:             user.DOB,
@@ -91,6 +94,10 @@ type CreateUserRequest struct {
 type LoginUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type GoogleAuthRequest struct {
+	Token string `json:"token" binding:"required"`
 }
 
 type UpdateUserRequest struct {

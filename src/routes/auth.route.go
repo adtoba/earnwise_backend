@@ -17,4 +17,5 @@ func (rc *AuthRouteController) RegisterAuthRoutes(rg *gin.RouterGroup) {
 	router := rg.Group("/auth")
 	router.POST("/login", rc.authController.Login)
 	router.POST("/register", rc.authController.Register)
+	router.POST("/google", rc.authController.GoogleAuth)
 }
